@@ -1,0 +1,11 @@
+{
+  BasedOnStyle: 'Google',
+  UseTab: Never,
+  IndentWidth: 2,
+  AllowShortCaseLabelsOnASingleLine: 'true',
+  ColumnLimit: '100',
+  SpacesInParentheses: 'true',
+  AlignConsecutiveAssignments: 'true',
+  AlignOperands: 'true',
+  AlignTrailingComments: 'true'
+}

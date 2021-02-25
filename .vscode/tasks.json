@@ -1,0 +1,54 @@
+{
+  "tasks": [
+    {
+      "type": "shell",
+      "label": "build tsv - debug",
+      // "command": "make -j4 && src/main/tsv",
+      "command": "./build_debug.sh",
+      "args": [],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        "$gcc"
+      ]
+    },
+    {
+      "type": "shell",
+      "label": "build tsv - release",
+      "command": "./build_release.sh",
+      "args": [],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        "$gcc"
+      ]
+    },
+    {
+      "type": "shell",
+      "label": "unit testing tsv",
+      "command": "./unit_tests.sh",
+      "args": [],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        "$gcc"
+      ]
+    },
+    {
+      "type": "shell",
+      "label": "run tsv - debug",
+      "command": "./run_debug.sh",
+      "args": [],
+      "options": {
+        "cwd": "${workspaceFolder}"
+      },
+      "problemMatcher": [
+        "$gcc"
+      ]
+    },
+  ],
+  "version": "2.0.0"
+}
