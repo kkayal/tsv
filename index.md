@@ -1,26 +1,26 @@
 Introduction
 ============
 
-This tool converts a tab separated table to a visually improved plain text format, which conforms to the recommendations at [markdownguide.org][1] and the implementation at [markdown-it][2].
+This tool converts a tab separated table to a visually improved plain text format, which conforms to the recommendations at [markdownguide.org][1].
 
 Description
 ===========
 
 The functionality is best explained by an example. The three lines below are separated by tabs. They can be created directly in a text editor or by copy & paste from a spreadsheet.
 
-    :ID:	:Long header:	Value	Last
+    :ID:	:Long header:	Value	Left
     1	abc	5	Hello, world
     125	foo bar	898.786384	Lorem ipsum
 
 In a plain text editor, the columns are not aligned and it is hard to see, which value belongs to which column.
 This tool converts such a table to the form below:
 
-    | ID  | Long header |      Value | Last         |
+    | ID  | Long header |      Value | Left         |
     |:---:|:-----------:|-----------:|--------------|
     |  1  |     abc     |          5 | Hello, world |
     | 125 |   foo bar   | 898.786384 | Lorem ipsum  |
 
-You can now clearly see the table structure directly, especially when using a monospaced font. By default all columns are aligned to the left. E.g. the last column labeled `Last` in the example above.
+You can now clearly see the table structure directly, especially when using a monospaced font. By default all columns are aligned to the left. E.g. the last column labeled `Left` in the example above.
 
 However, tsv checks for numbers. If _all_ cells of a column are numbers (or empty), the default alignment becomes to the right. E.g. the `Value` column.
 
@@ -32,7 +32,7 @@ You can override the default alignment by adding colons around column names as f
 
 The `ID` column has only numbers, so it would be aligned to the left. But it is centered, because the input explicitly specifies the alignment. See `:ID:`
 
-Some markdown tools such as [markdown-it][2] can turn this output to various formats. From HTML to PDF there are many possibilities. E.g. [markdown-it][2] has an online version for immediate viewing as a web page. 
+Some markdown tools can turn this output to various formats. From HTML to PDF there are many possibilities. E.g. [markdown-it][2] has an online version for immediate viewing as a web page. 
 
 Installing
 ==========
