@@ -6,7 +6,7 @@ This tool converts a tab separated table to a visually improved plain text forma
 Status
 ======
 
-Experimental. Version 0.1.1 as of 2021/02/28
+Experimental. Version 0.2.0 as of 2021/02/28
 
 Description
 ===========
@@ -72,6 +72,8 @@ The output goes to the standard output. If you wish to save the output to a file
 
     tsv INPUT_FILE [--ast] [--trace]
 
+5. You can pipe the input from an other executable such as `cat input.txt | tsv`
+
 Development environment
 =======================
 
@@ -124,7 +126,6 @@ TODO
 
 - Add an option to create a JSON Version
 - Create a working development environment for Windows 10
-- Allow input from a pipe such as `cat input.txt | tsv`
 - Create a docker image, preferably based on alpine linux
 
 [1]: https://www.markdownguide.org/extended-syntax/

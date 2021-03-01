@@ -11,7 +11,7 @@ using namespace peg;
 using namespace peg::udl;
 using namespace std;
 
-const char *tsv_version = "0.1.1";
+const char *tsv_version = "0.2.0";
 const char *tsv_help    = "Usage: tsv [--version] [-h] INPUT_FILE [--ast] [--trace]";
 
 enum alignmet { no_preference, left, center, right };
@@ -72,24 +72,45 @@ alignmet get_alignment_from_colons( string_view token ) {
 
 int main( int argc, const char **argv ) {
   try {
+    cout << boolalpha;  // I want to see 'true' and 'false' instead of '1' and '0'
+
+    // Check if there is input from a pipe.
+    bool source_from_pipe = false;
+    string source;
+    if ( !isatty( STDIN_FILENO ) ) {
+      // STDIN_FILENO is **not** a tty. That means not a terminal and
+      // that means it could be piped by some other program to this one
+      source_from_pipe = true;
+      string lineInput;
+      stringstream ss;
+      while ( getline( cin, lineInput ) ) {
+        ss << lineInput << endl;
+      }
+      source = ss.str();
+    }
+
+    // If the source code is available from a pipe, we don't need a source file and
+    // have to consider one less argc
+    size_t n = ( source_from_pipe ) ? 1 : 0;
+
     // Parser commandline parameters
-    auto path        = argv[1];
+    auto path        = ( source_from_pipe ) ? "Inline" : argv[1];
     bool print_trace = false;
     bool print_ast   = false;
 
-    if ( argc == 1 ) {
+    if ( argc == 1 - n ) {
       cout << endl;
       cout << tsv_help << endl;
       return 0;
-    } else if ( argc == 2 && string( "-h" ) == argv[1] ) {
+    } else if ( argc == 2 - n && string( "-h" ) == argv[1 - n] ) {
       cout << tsv_help << endl;
       return 0;
-    } else if ( argc == 2 && string( "--version" ) == argv[1] ) {
+    } else if ( argc == 2 - n && string( "--version" ) == argv[1 - n] ) {
       cout << tsv_version << endl;
       return 0;
     }
 
-    auto arg = 2;
+    auto arg = 2 - n;
     while ( arg < argc ) {
       if ( string( "--ast" ) == argv[arg] ) {
         print_ast = true;
@@ -99,22 +120,6 @@ int main( int argc, const char **argv ) {
       arg++;
     }
 
-    cout << boolalpha;  // I want to see 'true' and 'false' instead of '1' and '0'
-
-    //
-    // TODO: Check if there is input from a pipe.
-    //
-    // if ( isatty( STDIN_FILENO ) ) {
-    //   cerr << "no piped input" << endl;
-    // } else {
-    //   // STDIN_FILENO is **not** a tty. That means not a terminal and
-    //   // that means it could be piped by some other program to this one
-    //   string lineInput;
-    //   while ( getline( cin, lineInput ) ) {
-    //     cout << lineInput << endl;
-    //   }
-    // }
-
     // Read the PEG Grammer into the string grammar
 #ifdef NDEBUG  // build type = release
 #include "tsv.peg.h"
@@ -123,7 +128,9 @@ int main( int argc, const char **argv ) {
 #endif
 
     // Read a source file into memory
-    auto source = getFileContents( path );
+    if ( !source_from_pipe ) {
+      source = getFileContents( path );
+    };
 
     // Is the input empty?
     if ( source.size() == 0 ) return 0;
