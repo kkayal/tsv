@@ -3,6 +3,11 @@ Introduction
 
 This tool converts a tab separated table to a visually improved plain text format, which conforms to the recommendations at [markdownguide.org][1].
 
+Status
+======
+
+Experimental. Version 0.1.1 as of 2021/02/28
+
 Description
 ===========
 
