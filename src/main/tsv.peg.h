@@ -1,9 +1,9 @@
 auto grammar = R"(
-table    <- _ head body EOF
-head     <- row LF
-body     <- row (LF row)* _
+table    <- _ head body? EOF  { no_ast_opt }
+head     <- row LF?           { no_ast_opt }
+body     <- row (LF row)* _   { no_ast_opt }
 
-row      <- !( LF / EOF ) cell ( '\t' cell )*
+row      <- !( LF / EOF ) cell ( '\t' cell )*  { no_ast_opt }
 cell     <- empty / number / phrase
 
 empty    <- &'\t' / &LF / EOF
@@ -11,7 +11,6 @@ empty    <- &'\t' / &LF / EOF
 phrase <- < char+ >   # A sequence of chars. Allows space characters!
 char <- !['\t''\n''\r'] . # Anything, except a tab or line feed or carriage return
 
-# TODO: extend this to allow floating point numbers
 number  <- < sign? uint ( '.' uint ( [eE] sign? uint)? )? > &('\t' / LF / EOF)
 sign    <- '+' / '-'
 uint    <- < [0-9]+ >

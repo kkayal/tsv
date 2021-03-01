@@ -11,7 +11,7 @@ using namespace peg;
 using namespace peg::udl;
 using namespace std;
 
-const char *tsv_version = "0.2.0";
+const char *tsv_version = "0.2.1";
 const char *tsv_help    = "Usage: tsv [--version] [-h] INPUT_FILE [--ast] [--trace]";
 
 enum alignmet { no_preference, left, center, right };
@@ -160,8 +160,8 @@ int main( int argc, const char **argv ) {
       // If there is only a header line and no body, do not optimize the AST
       bool have_body = ( ast->nodes.size() == 2 ) ? true : false;
 
-      ast = parser.optimize_ast(
-          ast );  // Note that in the PEG we disable optimizing 'head' and 'body'
+      // Note that in the PEG we disable optimizing 'head' and 'body'
+      ast = parser.optimize_ast( ast );
 
       if ( print_ast ) {
         cout << "============= Optimized AST =============" << endl;

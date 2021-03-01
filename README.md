@@ -6,7 +6,7 @@ This tool converts a tab separated table to a visually improved plain text forma
 Status
 ======
 
-Experimental. Version 0.2.0 as of 2021/02/28
+Experimental. Version 0.2.1 as of 2021/02/28
 
 Description
 ===========

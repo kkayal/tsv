@@ -35,7 +35,11 @@ const string grammar = getFileContents( "src/main/tsv.peg" );
 #endif
 
 struct MyFixture {
-  string source = "var u8 x3";
+  string source = R"(
+Col1	Column2
+abc	1
+5	77
+)";
 };
 
 TEST_CASE( MyFixture, Tokens ) {
@@ -46,23 +50,53 @@ TEST_CASE( MyFixture, Tokens ) {
     cerr << format_error_message( "inline", ln, col, msg ) << endl;
   };
 
-  SECTION( "VAR DECLARATION" ) {
+  SECTION( "AST - SIMPLE TABLE" ) {
     shared_ptr<Ast> ast;
     if ( p.parse_n( source.data(), source.size(), ast, "inline" ) ) {
-      // SymbolTable::build_on_ast(ast);
-
       string ast_str = ast_to_s<Ast>( ast ).c_str();
-      CHECK_EQUAL( ast_str, R"(+ program
-  + block
-    + var
-      + type/0
-      - ident (x3)
+      CHECK_EQUAL( ast_str, R"(+ table
+  + head
+    + row
+      + cell/2
+        - phrase (Col1)
+      + cell/2
+        - phrase (Column2)
+  + body
+    + row
+      + cell/2
+        - phrase (abc)
+      + cell/1
+        - number (1)
+    + row
+      + cell/1
+        - number (5)
+      + cell/1
+        - number (77)
 )" );
     }
   }
 
-  SECTION( "VAR TYPE" ) {
-    // Next test within this test case
+  SECTION( "AST OPTIMIZED - SIMPLE TABLE" ) {
+    shared_ptr<Ast> ast;
+    if ( p.parse_n( source.data(), source.size(), ast, "inline" ) ) {
+      // Note that in the PEG we disable optimizing 'head' and 'body'
+      ast = p.optimize_ast( ast );
+
+      string ast_str = ast_to_s<Ast>( ast ).c_str();
+      CHECK_EQUAL( ast_str, R"(+ table
+  + head
+    + row
+      - cell/2[phrase] (Col1)
+      - cell/2[phrase] (Column2)
+  + body
+    + row
+      - cell/2[phrase] (abc)
+      - cell/1[number] (1)
+    + row
+      - cell/1[number] (5)
+      - cell/1[number] (77)
+)" );
+    }
   }
 }
 
