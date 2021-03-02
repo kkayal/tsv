@@ -3,6 +3,11 @@ Introduction
 
 This tool converts a tab separated table to a visually improved plain text format, which conforms to the recommendations at [markdownguide.org][1].
 
+Status
+======
+
+Experimental. Version 0.3.0 as of 2021/02/28
+
 Description
 ===========
 
@@ -22,7 +27,7 @@ This tool converts such a table to the form below:
 
 You can now clearly see the table structure directly, especially when using a monospaced font. By default all columns are aligned to the left. E.g. the last column labeled `Left` in the example above.
 
-However, tsv checks for numbers. If _all_ cells of a column are numbers (or empty), the default alignment becomes to the right. E.g. the `Value` column.
+However, tsv checks for numbers. If _all_ cells of a column are numbers (or some empty), the default alignment becomes to the right. E.g. the `Value` column.
 
 You can override the default alignment by adding colons around column names as follows:
 
@@ -47,6 +52,8 @@ Installing
     
     sudo make install
 
+This will install the executable `tsv` and a library `libtsv.a`
+
 Usage
 =====
 1. Normally, just type tsv and the name of the input file.
@@ -66,6 +73,8 @@ The output goes to the standard output. If you wish to save the output to a file
 4. Software developers can print the AST or even a parser trace.
 
     tsv INPUT_FILE [--ast] [--trace]
+
+5. You can pipe the input from an other executable such as `cat input.txt | tsv`
 
 Development environment
 =======================
@@ -119,7 +128,6 @@ TODO
 
 - Add an option to create a JSON Version
 - Create a working development environment for Windows 10
-- Allow input from a pipe such as `cat input.txt | tsv`
 - Create a docker image, preferably based on alpine linux
 
 [1]: https://www.markdownguide.org/extended-syntax/
