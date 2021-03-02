@@ -3,7 +3,7 @@
     {
       "type": "shell",
       "label": "build tsv - debug",
-      // "command": "make -j4 && src/main/tsv",
+      // "command": "make -j4 && src/tsv-bin/tsv",
       "command": "./build_debug.sh",
       "args": [],
       "options": {

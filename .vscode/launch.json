@@ -8,7 +8,7 @@
       "name": "Debug tsv",
       "type": "cppdbg",
       "request": "launch",
-      "program": "${workspaceFolder}/build_debug/src/main/tsv",
+      "program": "${workspaceFolder}/build_debug/src/tsv-bin/tsv",
       "args": ["test/test.tsv", "--ast"],
       "stopAtEntry": false,
       "cwd": "${workspaceFolder}",

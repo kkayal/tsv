@@ -6,7 +6,7 @@ This tool converts a tab separated table to a visually improved plain text forma
 Status
 ======
 
-Experimental. Version 0.2.1 as of 2021/02/28
+Experimental. Version 0.3.0 as of 2021/02/28
 
 Description
 ===========
@@ -27,7 +27,7 @@ This tool converts such a table to the form below:
 
 You can now clearly see the table structure directly, especially when using a monospaced font. By default all columns are aligned to the left. E.g. the last column labeled `Left` in the example above.
 
-However, tsv checks for numbers. If _all_ cells of a column are numbers (or empty), the default alignment becomes to the right. E.g. the `Value` column.
+However, tsv checks for numbers. If _all_ cells of a column are numbers (or some empty), the default alignment becomes to the right. E.g. the `Value` column.
 
 You can override the default alignment by adding colons around column names as follows:
 
@@ -51,6 +51,8 @@ Installing
     cd build_release
     
     sudo make install
+
+This will install the executable `tsv` and a library `libtsv.a`
 
 Usage
 =====

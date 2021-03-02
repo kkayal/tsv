@@ -7,11 +7,9 @@
 #include <string_view>
 
 #include "CppUnitTestFramework.hpp"
-#include "peglib.h"
+#include "tsvlib.h"
 #include "util.h"
 
-using namespace peg;
-using namespace peg::udl;
 using namespace std;
 
 /*
@@ -31,7 +29,7 @@ string format_error_message( const string &path, size_t ln, size_t col, const st
 #ifdef NDEBUG  // build type = release
 #include "tsv.peg.h"
 #else  // build type = debug
-const string grammar = getFileContents( "src/main/tsv.peg" );
+const string grammar = getFileContents( "src/tsv-lib/tsv.peg" );
 #endif
 
 struct MyFixture {
@@ -42,19 +40,40 @@ abc	1
 )";
 };
 
+TEST_CASE( MyFixture, IncompleteInput ) {
+  const char *path = "Inline";
+
+  SECTION( "NO INPUT - NO OUTPUT" ) {
+    stringstream out;
+    stringstream err;
+    auto result = tsv_to_md( "", path, out, err, true, false );
+    CHECK_EQUAL( out.str(), "" );
+  }
+
+  SECTION( "ONLY ONE WORD" ) {
+    stringstream out;
+    stringstream err;
+    auto result = tsv_to_md( "Col1", path, out, err, false, false );
+    CHECK_EQUAL( out.str(), "| Col1 |\n|------|\n" );
+  }
+
+  SECTION( "ONLY TWO COLUMN HEADERS" ) {
+    stringstream out;
+    stringstream err;
+    auto result = tsv_to_md( "Col1\tCol2", path, out, err, false, false );
+    CHECK_EQUAL( out.str(), "| Col1 | Col2 |\n|------|------|\n" );
+  }
+}
+
 TEST_CASE( MyFixture, Tokens ) {
-  // Setup a PEG parser
-  parser p( grammar );
-  p.enable_ast<Ast>();
-  p.log = [&]( size_t ln, size_t col, const string &msg ) {
-    cerr << format_error_message( "inline", ln, col, msg ) << endl;
-  };
+  stringstream out;
+  stringstream err;
+  const char *path = "Inline";
 
   SECTION( "AST - SIMPLE TABLE" ) {
-    shared_ptr<Ast> ast;
-    if ( p.parse_n( source.data(), source.size(), ast, "inline" ) ) {
-      string ast_str = ast_to_s<Ast>( ast ).c_str();
-      CHECK_EQUAL( ast_str, R"(+ table
+    auto result = tsv_to_md( source, path, out, err, true, false );
+    CHECK_EQUAL( out.str(), R"(============= Regular AST =============
++ table
   + head
     + row
       + cell/2
@@ -72,18 +91,8 @@ TEST_CASE( MyFixture, Tokens ) {
         - number (5)
       + cell/1
         - number (77)
-)" );
-    }
-  }
-
-  SECTION( "AST OPTIMIZED - SIMPLE TABLE" ) {
-    shared_ptr<Ast> ast;
-    if ( p.parse_n( source.data(), source.size(), ast, "inline" ) ) {
-      // Note that in the PEG we disable optimizing 'head' and 'body'
-      ast = p.optimize_ast( ast );
-
-      string ast_str = ast_to_s<Ast>( ast ).c_str();
-      CHECK_EQUAL( ast_str, R"(+ table
+============= Optimized AST =============
++ table
   + head
     + row
       - cell/2[phrase] (Col1)
@@ -95,8 +104,12 @@ TEST_CASE( MyFixture, Tokens ) {
     + row
       - cell/1[number] (5)
       - cell/1[number] (77)
+============= End of AST =============
+| Col1 | Column2 |
+|------|--------:|
+| abc  |       1 |
+| 5    |      77 |
 )" );
-    }
   }
 }
 

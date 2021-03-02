@@ -22,8 +22,8 @@ file(GLOB SOURCES "*.c" "*.cpp")
 set(THREADS_PREFER_PTHREAD_FLAG ON)
 find_package(Threads REQUIRED)
 
-include_directories(../main ../util)
+include_directories(../util ../tsv-lib)
 
 add_executable(unit_tests ${SOURCES})
 
-target_link_libraries(${PROJECT_NAME} PRIVATE util Threads::Threads)
+target_link_libraries(${PROJECT_NAME} PRIVATE tsv-lib util Threads::Threads)

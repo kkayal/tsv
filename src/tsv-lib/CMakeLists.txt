@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.13.4)
 
-project(util)
+project(tsv-lib)
 
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -14,4 +14,8 @@ endif(CMAKE_COMPILER_IS_GNUCXX)
 
 file(GLOB SOURCES "*.c" "*.cc" "*.cpp")
 
-add_library(util ${SOURCES})
+include_directories(../util)
+
+add_library(tsv-lib ${SOURCES})
+
+set_target_properties(tsv-lib PROPERTIES OUTPUT_NAME tsv)

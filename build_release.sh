@@ -1,6 +1,6 @@
 #!/usr/bin/env bash
 
-cd src/main
+cd src/tsv-lib
 cat peg.incl.header.h tsv.peg peg.incl.footer.h > tsv.peg.h
 
 cd ../..

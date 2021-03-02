@@ -1,3 +1,5 @@
+#include "tsvlib.h"
+
 #include <unistd.h>
 
 #include <fstream>
@@ -5,39 +7,97 @@
 #include <sstream>
 #include <string_view>
 
-#include "util.h"
+#include "peglib.h"
 
 using namespace peg;
 using namespace peg::udl;
 using namespace std;
 
-const char *tsv_version = "0.2.1";
+const char *tsv_version = "0.3.0";
 const char *tsv_help    = "Usage: tsv [--version] [-h] INPUT_FILE [--ast] [--trace]";
 
-enum alignmet { no_preference, left, center, right };
+// Copied and modified from cpp_peg linter at https://github.com/yhirose/cpp-peglib
+void trace_parser( parser parser, stringstream &out ) {
+  size_t prev_pos = 0;
+  parser.enable_trace(
+      [&]( const peg::Ope &ope, const char *s, size_t /*n*/, const peg::SemanticValues & /*sv*/,
+           const peg::Context &c, const std::any & /*dt*/ ) {
+        auto pos       = static_cast<size_t>( s - c.s );
+        auto backtrack = ( pos < prev_pos ? "*" : "" );
+        string indent;
+        auto level = c.trace_ids.size() - 1;
+        while ( level-- ) {
+          indent += "│";
+        }
+        std::string name;
+        {
+          name = peg::TraceOpeName::get( const_cast<peg::Ope &>( ope ) );
+
+          auto lit = dynamic_cast<const peg::LiteralString *>( &ope );
+          if ( lit ) {
+            name += " '" + peg::escape_characters( lit->lit_ ) + "'";
+          }
+        }
+        out << "E " << pos << backtrack << "\t" << indent << "┌" << name << " #"
+            << c.trace_ids.back() << std::endl;
+        prev_pos = static_cast<size_t>( pos );
+      },
+      [&]( const peg::Ope &ope, const char *s, size_t /*n*/, const peg::SemanticValues &sv,
+           const peg::Context &c, const std::any & /*dt*/, size_t len ) {
+        auto pos = static_cast<size_t>( s - c.s );
+        if ( len != static_cast<size_t>( -1 ) ) {
+          pos += len;
+        }
+        string indent;
+        auto level = c.trace_ids.size() - 1;
+        while ( level-- ) {
+          indent += "│";
+        }
+        auto ret  = len != static_cast<size_t>( -1 ) ? "└o " : "└x ";
+        auto name = peg::TraceOpeName::get( const_cast<peg::Ope &>( ope ) );
+        std::stringstream choice;
+        if ( sv.choice_count() > 0 ) {
+          choice << " " << sv.choice() << "/" << sv.choice_count();
+        }
+        std::string token;
+        if ( !sv.tokens.empty() ) {
+          token += ", token '";
+          token += sv.tokens[0];
+          token += "'";
+        }
+        std::string matched;
+        if ( peg::success( len ) && peg::TokenChecker::is_token( const_cast<peg::Ope &>( ope ) ) ) {
+          matched = ", match '" + peg::escape_characters( s, len ) + "'";
+        }
+        out << "L " << pos << "\t" << indent << ret << name << " #" << c.trace_ids.back()
+            << choice.str() << token << matched << std::endl;
+      } );
+}
 
 /// prints a single table cell to standard output and takes care of
 /// padding for the alignment based on column size
-void print_cell( string_view token, const alignmet alignment, const size_t &size ) {
+string print_cell( string_view token, const alignmet alignment, const size_t &size ) {
+  stringstream ss;
   switch ( alignment ) {
     case alignmet::center: {
       auto spaces_left  = ( size - token.size() ) / 2;
       auto spaces_right = size + 1 - token.size() - spaces_left;
-      for ( size_t j = 0; j < spaces_left; j++ ) cout << ' ';
-      cout << token;
-      for ( size_t j = 0; j < spaces_right; j++ ) cout << ' ';
+      for ( size_t j = 0; j < spaces_left; j++ ) ss << ' ';
+      ss << token;
+      for ( size_t j = 0; j < spaces_right; j++ ) ss << ' ';
     } break;
     case alignmet::right: {
-      for ( size_t j = 0; j < size - token.size(); j++ ) cout << ' ';
-      cout << token << ' ';
+      for ( size_t j = 0; j < size - token.size(); j++ ) ss << ' ';
+      ss << token << ' ';
     } break;
     case alignmet::left: [[fallthrough]];
     case alignmet::no_preference: {
-      cout << token;
-      for ( size_t j = 0; j < size + 1 - token.size(); j++ ) cout << ' ';
+      ss << token;
+      for ( size_t j = 0; j < size + 1 - token.size(); j++ ) ss << ' ';
     } break;
     default: break;
   }
+  return ss.str();
 }
 
 /// Find the max size of each column
@@ -66,95 +126,39 @@ alignmet get_alignment_from_colons( string_view token ) {
   }
 }
 
-//
-// Main
-//
-
-int main( int argc, const char **argv ) {
+Result tsv_to_md( string source, const char *path, stringstream &out, stringstream &err,
+                     bool print_ast, bool print_trace ) {
   try {
-    cout << boolalpha;  // I want to see 'true' and 'false' instead of '1' and '0'
-
-    // Check if there is input from a pipe.
-    bool source_from_pipe = false;
-    string source;
-    if ( !isatty( STDIN_FILENO ) ) {
-      // STDIN_FILENO is **not** a tty. That means not a terminal and
-      // that means it could be piped by some other program to this one
-      source_from_pipe = true;
-      string lineInput;
-      stringstream ss;
-      while ( getline( cin, lineInput ) ) {
-        ss << lineInput << endl;
-      }
-      source = ss.str();
-    }
-
-    // If the source code is available from a pipe, we don't need a source file and
-    // have to consider one less argc
-    size_t n = ( source_from_pipe ) ? 1 : 0;
-
-    // Parser commandline parameters
-    auto path        = ( source_from_pipe ) ? "Inline" : argv[1];
-    bool print_trace = false;
-    bool print_ast   = false;
-
-    if ( argc == 1 - n ) {
-      cout << endl;
-      cout << tsv_help << endl;
-      return 0;
-    } else if ( argc == 2 - n && string( "-h" ) == argv[1 - n] ) {
-      cout << tsv_help << endl;
-      return 0;
-    } else if ( argc == 2 - n && string( "--version" ) == argv[1 - n] ) {
-      cout << tsv_version << endl;
-      return 0;
-    }
-
-    auto arg = 2 - n;
-    while ( arg < argc ) {
-      if ( string( "--ast" ) == argv[arg] ) {
-        print_ast = true;
-      } else if ( string( "--trace" ) == argv[arg] ) {
-        print_trace = true;
-      }
-      arg++;
-    }
-
     // Read the PEG Grammer into the string grammar
 #ifdef NDEBUG  // build type = release
 #include "tsv.peg.h"
 #else  // build type = debug
-    const string grammar = getFileContents( "src/main/tsv.peg" );
+    const string grammar = getFileContents( "src/tsv-lib/tsv.peg" );
 #endif
 
-    // Read a source file into memory
-    if ( !source_from_pipe ) {
-      source = getFileContents( path );
-    };
-
     // Is the input empty?
-    if ( source.size() == 0 ) return 0;
+    if ( source.size() == 0 ) return Result{ code : 0, msg : nullptr };
 
     // Setup a PEG parser
     parser parser( grammar );
     parser.enable_ast<Ast>();
     parser.enable_packrat_parsing();
     parser.log = [&]( size_t ln, size_t col, const string &msg ) {
-      cerr << path << ":" << ln << ":" << col << ": " << msg << endl;
+      err << path << ":" << ln << ":" << col << ": " << msg << endl;
     };
 
     // Enable tracing during parsing
     if ( print_trace ) {
-      cout << "============= Parser trace =============" << endl;
-      trace_parser( parser );
+      out << "============= Parser trace =============\n";
+      trace_parser( parser, out );
     }
 
     // Parse the source and make an AST
     shared_ptr<Ast> ast;
     if ( parser.parse_n( source.data(), source.size(), ast, path ) ) {
       if ( print_ast ) {
-        cout << "============= Regular AST =============" << endl;
-        cout << ast_to_s<Ast>( ast );
+        out << "============= Regular AST =============\n";
+        out << ast_to_s<Ast>( ast );
       }
 
       // If there is only a header line and no body, do not optimize the AST
@@ -164,9 +168,9 @@ int main( int argc, const char **argv ) {
       ast = parser.optimize_ast( ast );
 
       if ( print_ast ) {
-        cout << "============= Optimized AST =============" << endl;
-        cout << peg::ast_to_s( ast );
-        cout << "============= End of AST =============" << endl;
+        out << "============= Optimized AST =============\n";
+        out << peg::ast_to_s( ast );
+        out << "============= End of AST =============\n";
       }
 
       auto head     = ast->nodes[0];
@@ -273,14 +277,14 @@ int main( int argc, const char **argv ) {
       //
 
       // Remove any alignment related colons in the header, if any
-      cout << "| ";  // Start the line
+      out << "| ";  // Start the line
       bool first = true;
       i          = 0;
       for ( auto cell : head_row->nodes ) {
         if ( first ) {
           first = false;
         } else {
-          cout << "| ";
+          out << "| ";
         }
         auto token      = cell->token;
         auto first_char = *token.begin();
@@ -297,21 +301,21 @@ int main( int argc, const char **argv ) {
         }
 
         // Calculate the spaces on the left and right side and print the token
-        print_cell( token_, column_alignments[i], column_sizes[i] );
+        out << print_cell( token_, column_alignments[i], column_sizes[i] );
         i++;
       }
-      cout << "|" << endl;  // Finish the line
+      out << "|\n";  // Finish the line
 
       //
       // 2 - The separation line
       //
-      cout << "|";  // Start the line
+      out << "|";  // Start the line
       first = true;
       for ( size_t i = 0; i < n_columns; i++ ) {
         if ( first ) {
           first = false;
         } else {
-          cout << "|";
+          out << "|";
         }
 
         auto n_dashes = column_sizes[i] + 2;  // +2 for the spaces around headers
@@ -323,20 +327,20 @@ int main( int argc, const char **argv ) {
         }
 
         switch ( column_alignments[i] ) {
-          case alignmet::center: cout << ':'; break;
-          case alignmet::left: cout << ':'; break;
+          case alignmet::center: out << ':'; break;
+          case alignmet::left: out << ':'; break;
           default: break;
         }
 
-        for ( size_t j = 0; j < n_dashes; j++ ) cout << '-';
+        for ( size_t j = 0; j < n_dashes; j++ ) out << '-';
 
         switch ( column_alignments[i] ) {
-          case alignmet::center: cout << ':'; break;
-          case alignmet::right: cout << ':'; break;
+          case alignmet::center: out << ':'; break;
+          case alignmet::right: out << ':'; break;
           default: break;
         }
       }
-      cout << "|" << endl;  // Finish the line
+      out << "|\n";  // Finish the line
 
       //
       // 3 - The table body
@@ -344,33 +348,31 @@ int main( int argc, const char **argv ) {
 
       if ( have_body ) {
         for ( auto row : body->nodes ) {
-          cout << "| ";  // Start the line
+          out << "| ";  // Start the line
           first = true;
           i     = 0;
           for ( auto cell : row->nodes ) {
             if ( first ) {
               first = false;
             } else {
-              cout << "| ";
+              out << "| ";
             }
 
             auto token = cell->token;
 
             // Calculate the spaces on the left and right side and print the token
-            print_cell( token, column_alignments[i], column_sizes[i] );
+            out << print_cell( token, column_alignments[i], column_sizes[i] );
             i++;
           }
-          cout << "|" << endl;  // Finish the line
+          out << "|\n";  // Finish the line
         }
       }
-
-      return 0;
     }
   } catch ( const runtime_error &e ) {
-    cerr << e.what() << endl;
+    return Result{ code : -1, msg : e.what() };
   } catch ( const exception &e ) {
-    cerr << e.what() << endl;
+    return Result{ code : -1, msg : e.what() };
   }
 
-  return -1;
+  return Result{ code : 0, msg : nullptr };
 }
