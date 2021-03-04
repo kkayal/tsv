@@ -6,7 +6,7 @@ This tool converts a tab separated table to a visually improved plain text forma
 Status
 ======
 
-Experimental. Version 0.3.0 as of 2021/02/28
+Experimental. Version 0.4.0 as of 2021/03/4
 
 Description
 ===========
@@ -14,16 +14,16 @@ Description
 The functionality is best explained by an example. The three lines below are separated by tabs. They can be created directly in a text editor or by copy & paste from a spreadsheet.
 
     :ID:	:Long header:	Value	Left
-    1	abc	5	Hello, world
+    1	abc	5	Hello, world™
     125	foo bar	898.786384	Lorem ipsum
 
 In a plain text editor, the columns are not aligned and it is hard to see, which value belongs to which column.
 This tool converts such a table to the form below:
 
-    | ID  | Long header |      Value | Left         |
-    |:---:|:-----------:|-----------:|--------------|
-    |  1  |     abc     |          5 | Hello, world |
-    | 125 |   foo bar   | 898.786384 | Lorem ipsum  |
+    | ID  | Long header |         Value | Left          |
+    |:---:|:-----------:|--------------:|---------------|
+    |  1  |     abc     |             5 | Hello, world™ |
+    | 125 |   foo bar   | -898.7863e-73 | Lorem ipsum   |
 
 You can now clearly see the table structure directly, especially when using a monospaced font. By default all columns are aligned to the left. E.g. the last column labeled `Left` in the example above.
 
@@ -37,7 +37,9 @@ You can override the default alignment by adding colons around column names as f
 
 The `ID` column has only numbers, so it would be aligned to the left. But it is centered, because the input explicitly specifies the alignment. See `:ID:`
 
-Some markdown tools can turn this output to various formats. From HTML to PDF there are many possibilities. E.g. [markdown-it][2] has an online version for immediate viewing as a web page. 
+Some markdown tools can turn this output to various formats. From HTML to PDF there are many possibilities. E.g. [markdown-it][2] has an online version for immediate viewing as a web page.
+
+Note that tsv supports UTF-8 Encoding (and no other encodings). The example above contains a trade mark sign next to "Hello, world" to demonstrate that the column width is counted correctly by code points (and not bytes).
 
 Installing
 ==========

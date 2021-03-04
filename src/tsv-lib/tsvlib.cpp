@@ -13,7 +13,7 @@ using namespace peg;
 using namespace peg::udl;
 using namespace std;
 
-const char *tsv_version = "0.3.0";
+const char *tsv_version = "0.4.0";
 const char *tsv_help    = "Usage: tsv [--version] [-h] INPUT_FILE [--ast] [--trace]";
 
 // Copied and modified from cpp_peg linter at https://github.com/yhirose/cpp-peglib
