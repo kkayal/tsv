@@ -40,6 +40,33 @@ abc	1
 )";
 };
 
+TEST_CASE( MyFixture, COUNT_CODE_POINTS ) {
+  SECTION( "JUST 3 ASCII CHARS" ) {
+    const char *s = "123";
+    auto len      = count_ut8_codepoints( s );
+    CHECK_EQUAL( len, 3 );
+  }
+
+  SECTION( "SINGE CODE POINT" ) {
+    // Trade mark --> U+2122 ™ TRADE MARK SIGN UTF-8 (hex)	0xE2 0x84 0xA2 (e284a2)
+    const char *s = "™";
+    CHECK_EQUAL( count_ut8_codepoints( s ), 1 );
+  }
+
+  SECTION( "MIXED" ) {
+    // Trade mark --> U+2122 ™ TRADE MARK SIGN UTF-8 (hex)	0xE2 0x84 0xA2 (e284a2)
+    const char *s = "a™b";
+    CHECK_EQUAL( count_ut8_codepoints( s ), 3 );
+  }
+
+  SECTION( "STRING VIEW" ) {
+    // Trade mark --> U+2122 ™ TRADE MARK SIGN UTF-8 (hex)	0xE2 0x84 0xA2 (e284a2)
+    std::string str = "a™bcdefghijklmn";
+    auto s          = std::string_view( str.data(), 5 );
+    CHECK_EQUAL( count_ut8_codepoints( s ), 3 );
+  }
+}
+
 TEST_CASE( MyFixture, IncompleteInput ) {
   const char *path = "Inline";
 
@@ -113,6 +140,23 @@ TEST_CASE( MyFixture, Tokens ) {
   }
 }
 
+TEST_CASE( MyFixture, UNICODE ) {
+  SECTION( "TM Symbol" ) {
+    stringstream out;
+    stringstream err;
+    const char *in = "Col1\tCol2\n123\t5Chars\n123\t5Char™";  // Contains a TM Symbol
+    const char *path = "Inline";
+    auto result = tsv_to_md( in, path, out, err, false, false );
+    auto expected_out = R"(| Col1 | Col2   |
+|-----:|--------|
+|  123 | 5Chars |
+|  123 | 5Char™ |
+)";
+    CHECK_EQUAL( out.str(), expected_out );
+  }
+}
+
 TEST_CASE( MyFixture, ExpectedErrors ) {
   // Test an expected error
 }
+

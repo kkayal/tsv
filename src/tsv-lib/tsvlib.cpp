@@ -78,22 +78,24 @@ void trace_parser( parser parser, stringstream &out ) {
 /// padding for the alignment based on column size
 string print_cell( string_view token, const alignmet alignment, const size_t &size ) {
   stringstream ss;
+  // Get the length of the token as number of code points
+  size_t len = count_ut8_codepoints(token);
   switch ( alignment ) {
     case alignmet::center: {
-      auto spaces_left  = ( size - token.size() ) / 2;
-      auto spaces_right = size + 1 - token.size() - spaces_left;
+      auto spaces_left  = ( size - len ) / 2;
+      auto spaces_right = size + 1 - len - spaces_left;
       for ( size_t j = 0; j < spaces_left; j++ ) ss << ' ';
       ss << token;
       for ( size_t j = 0; j < spaces_right; j++ ) ss << ' ';
     } break;
     case alignmet::right: {
-      for ( size_t j = 0; j < size - token.size(); j++ ) ss << ' ';
+      for ( size_t j = 0; j < size - len; j++ ) ss << ' ';
       ss << token << ' ';
     } break;
     case alignmet::left: [[fallthrough]];
     case alignmet::no_preference: {
       ss << token;
-      for ( size_t j = 0; j < size + 1 - token.size(); j++ ) ss << ' ';
+      for ( size_t j = 0; j < size + 1 - len; j++ ) ss << ' ';
     } break;
     default: break;
   }
@@ -104,7 +106,7 @@ string print_cell( string_view token, const alignmet alignment, const size_t &si
 void get_max_col_sizes( const std::shared_ptr<Ast> &ast, vector<size_t> &column_sizes ) {
   size_t i = 0;
   for ( auto cell : ast->nodes ) {
-    auto size = cell->token.size();
+    auto size = count_ut8_codepoints( cell->token );
     if ( size > column_sizes[i] ) {
       column_sizes[i] = size;
     }

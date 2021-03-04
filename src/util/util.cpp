@@ -25,3 +25,16 @@ std::string indent( size_t level, size_t tab_size ) {
   }
   return ss.str();
 }
+
+size_t count_ut8_codepoints(const char *s) {
+  size_t len = 0;
+  while ( *s ) len += ( *s++ & 0xc0 ) != 0x80;
+  return len;
+}
+
+size_t count_ut8_codepoints( const std::string_view str ) {
+  size_t len = 0;
+  const char *s = str.data();
+  for (size_t i = 0; i < str.length(); i++ ) len += ( *s++ & 0xc0 ) != 0x80;
+  return len;
+}
