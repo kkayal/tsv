@@ -6,7 +6,6 @@
 #include <iostream>
 #include <sstream>
 #include <string_view>
-#include <limits>
 
 #include "peglib.h"
 
