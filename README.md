@@ -14,16 +14,16 @@ Description
 The functionality is best explained by an example. The three lines below are separated by tabs. They can be created directly in a text editor or by copy & paste from a spreadsheet.
 
     :ID:	:Long header:	Value	Left
-    1	abc	5	Hello, world™
+    1	abc	5	"Hello", world™
     125	foo bar	898.786384	Lorem ipsum
 
 In a plain text editor, the columns are not aligned and it is hard to see, which value belongs to which column.
 This tool converts such a table to the form below:
 
-    | ID  | Long header |         Value | Left          |
-    |:---:|:-----------:|--------------:|---------------|
-    |  1  |     abc     |             5 | Hello, world™ |
-    | 125 |   foo bar   | -898.7863e-73 | Lorem ipsum   |
+    | ID  | Long header |         Value | Left            |
+    |:---:|:-----------:|--------------:|-----------------|
+    |  1  |     abc     |             5 | "Hello", world™ |
+    | 125 |   foo bar   | -898.7863e-73 | Lorem ipsum     |
 
 You can now clearly see the table structure directly, especially when using a monospaced font. By default all columns are aligned to the left. E.g. the last column labeled `Left` in the example above.
 

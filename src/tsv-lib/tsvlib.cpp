@@ -139,7 +139,7 @@ Result tsv_to_md( string source, const char *path, stringstream &out, stringstre
 #endif
 
     // Is the input empty?
-    if ( source.size() == 0 ) return Result{ code : 0, msg : nullptr };
+    if ( source.size() == 0 ) return Result{ .code = 0, .msg = nullptr };
 
     // Setup a PEG parser
     parser parser( grammar );
@@ -371,10 +371,10 @@ Result tsv_to_md( string source, const char *path, stringstream &out, stringstre
       }
     }
   } catch ( const runtime_error &e ) {
-    return Result{ code : -1, msg : e.what() };
+    return Result{ .code = -1, .msg = e.what() };
   } catch ( const exception &e ) {
-    return Result{ code : -1, msg : e.what() };
+    return Result{ .code = -1, .msg = e.what() };
   }
 
-  return Result{ code : 0, msg : nullptr };
+  return Result{ .code = 0, .msg = nullptr };
 }
